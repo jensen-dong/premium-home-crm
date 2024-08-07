@@ -50,7 +50,7 @@ Premium Home CRM is a robust customer relationship management application tailor
 
 ## Wireframes
 
-- Dashboard
+- Dashboard (MVP)
   
 ![Screenshot 2024-08-06 at 8 02 51 PM](https://github.com/user-attachments/assets/b50f1523-dbbe-4ad2-8623-d1d9395ac815)
 
@@ -62,7 +62,7 @@ Premium Home CRM is a robust customer relationship management application tailor
 
 ![Screenshot 2024-08-06 at 8 03 12 PM](https://github.com/user-attachments/assets/207fb209-99ec-4964-bf65-26ca8c241928)
 
-- Pipeline
+- Pipeline (MVP)
   
 ![Screenshot 2024-08-06 at 8 03 07 PM](https://github.com/user-attachments/assets/6fe969b3-76f2-4281-930f-7309149221a5)
 
