@@ -28,3 +28,10 @@ def client_update(request, pk):
         form = ClientForm(instance=client)
     return render(request, 'crm/client_form.html', {'form': form})
 
+def client_delete(request, pk):
+    client = get_object_or_404(Client, pk=pk)
+    if request.method == 'POST':
+        client.delete()
+        return redirect('client_list')
+    return render(request, 'crm/client_list.html')
+    
