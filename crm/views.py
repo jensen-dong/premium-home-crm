@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Client
-from .forms import ClientForm
+from .models import Client, SalesPipeline
+from .forms import ClientForm, SalesPipelineForm
 
 # Create your views here.
 def client_list(request):
@@ -34,4 +34,19 @@ def client_delete(request, pk):
         client.delete()
         return redirect('client_list')
     return render(request, 'crm/client_list.html')
+
+def sales_pipeline(request, client_id):
+    client = get_object_or_404(Client, id=client_id)
+    pipeline, created = SalesPipeline.objects.get_or_create(client=client)
+    if request.method == 'POST':
+        form = SalesPipelineForm(request.POST, instance=pipeline)
+        if form.is_valid():
+            form.save()
+    else:
+        form = SalesPipelineForm(instance=pipeline)
     
+    return render(request, 'crm/sales_pipeline.html', {
+        'client': client,
+        'form': form,
+        'pipeline': pipeline,
+    })
