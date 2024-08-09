@@ -7,7 +7,7 @@ class Client(models.Model):
     phone_number = models.CharField(max_length=10)
     email = models.CharField(max_length=255)
     address = models.CharField(max_length=255)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
     
     def __str__(self):
         return self.name
@@ -29,3 +29,4 @@ class SalesPipeline(models.Model):
 
     def __str__(self):
         return f"{self.client.name} - {self.get_current_stage_display()}"
+
