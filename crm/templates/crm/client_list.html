@@ -8,40 +8,51 @@
       >
     </div>
     <div class="col-12">
-      <div class="list-group">
-        {% for client in clients %}
-        <div class="list-group-item d-flex align-items-center">
-          <div class="circle bg-secondary mr-3"></div>
-          <a
-            href="{% url 'sales_pipeline' client.id %}"
-            class="text-decoration-none"
-          >
-            <div>{{ client.name }}</div>
-          </a>
-          <div class="ml-auto">
-            <a
-              href="{% url 'client_update' client.pk %}"
-              class="btn btn-primary btn-sm"
-              >Edit</a
-            >
-            <button
-              type="button"
-              class="btn btn-danger btn-sm"
-              data-toggle="modal"
-              data-target="#deleteModal"
-              data-client-id="{{ client.pk }}"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-        {% endfor %}
-      </div>
+      <table class="table table-striped mt-3">
+        <thead>
+          <tr>
+            <th><a href="?sort_by=name">Client Name</a></th>
+            <th><a href="?sort_by=stage">Stage</a></th>
+            <th><a href="?sort_by=revenue">Est. Revenue</a></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for data in client_data %}
+          <tr>
+            <td>
+              <a
+                href="{% url 'sales_pipeline' data.client.id %}"
+                class="text-decoration-none"
+              >
+                {{ data.client.name }}
+              </a>
+            </td>
+            <td>{{ data.stage }}</td>
+            <td>${{ data.total_revenue }}</td>
+            <td class="text-right">
+              <a
+                href="{% url 'client_update' data.client.pk %}"
+                class="btn btn-primary btn-sm"
+                >Edit</a
+              >
+              <button
+                type="button"
+                class="btn btn-danger btn-sm"
+                data-toggle="modal"
+                data-target="#deleteModal"
+                data-client-id="{{ data.client.pk }}"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
 <div
   class="modal fade"
   id="deleteModal"

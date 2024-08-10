@@ -1,13 +1,38 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Client, SalesPipeline
-from .forms import ClientForm, SalesPipelineForm
-from django.contrib.auth import login, authenticate, logout
+from .models import Client, SalesPipeline, Campaign, Order, Lead
+from .forms import ClientForm, SalesPipelineForm, ProductForm, CampaignForm, OrderForm, ProductFormSet
+from django.contrib.auth import login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 
 # Create your views here.
+def redirect_to_appropriate_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    else:
+        return redirect('login')
+    
 def client_list(request):
     clients = Client.objects.filter(owner=request.user)
-    return render(request, 'crm/client_list.html', {'clients': clients})
+    client_data = []
+    for client in clients:
+        # Try to get the SalesPipeline for the client
+        pipeline, created = SalesPipeline.objects.get_or_create(client=client)
+        total_revenue = sum(product.normal_price for product in pipeline.products.all())
+        client_data.append({
+            'client': client,
+            'stage': pipeline.get_current_stage_display(),
+            'total_revenue': total_revenue,
+        })
+
+    sort_by = request.GET.get('sort_by', 'name')
+    if sort_by == 'stage':
+        client_data.sort(key=lambda x: x['stage'])
+    elif sort_by == 'revenue':
+        client_data.sort(key=lambda x: x['total_revenue'], reverse=True)
+    else:
+        client_data.sort(key=lambda x: x['client'].name)
+
+    return render(request, 'crm/client_list.html', {'client_data': client_data, 'sort_by': sort_by})
 
 def client_create(request):
     if request.method == 'POST':
@@ -40,19 +65,53 @@ def client_delete(request, pk):
     return render(request, 'crm/client_list.html')
 
 def sales_pipeline(request, client_id):
-    client = get_object_or_404(Client, id=client_id)
+    print("Request method:", request.method)
+    client = get_object_or_404(Client, id=client_id, owner=request.user)
     pipeline, created = SalesPipeline.objects.get_or_create(client=client)
+
+    products = pipeline.products.all()
+    total_revenue = sum(product.normal_price for product in products)
+
+    form = SalesPipelineForm(instance=pipeline)
+    product_form = ProductForm()
+    order_form = OrderForm()
+
     if request.method == 'POST':
-        form = SalesPipelineForm(request.POST, instance=pipeline)
-        if form.is_valid():
-            form.save()
-    else:
-        form = SalesPipelineForm(instance=pipeline)
-    
+        print("Handling POST request")
+        if 'stage_form' in request.POST:
+            form = SalesPipelineForm(request.POST, instance=pipeline)
+            if form.is_valid():
+                form.save()
+                return redirect('sales_pipeline', client_id=client_id)
+        elif 'product_form' in request.POST:
+            print("Handling product form submission")
+            product_form = ProductForm(request.POST)
+            if product_form.is_valid():
+                product = product_form.save(commit=False)
+                product.pipeline = pipeline
+                product.save()
+                print("Product added successfully:", product.name)
+                return redirect('sales_pipeline', client_id=client_id)
+            else:
+                print("Product form is not valid. Errors:", product_form.errors)
+        elif 'order_form' in request.POST:
+            order_form = OrderForm(request.POST)
+            if order_form.is_valid():
+                order = order_form.save(commit=False)
+                order.pipeline = pipeline
+                order.total_price = total_revenue  # Set the total price based on total revenue
+                order.save()
+                return redirect('sales_pipeline', client_id=client_id)
+
     return render(request, 'crm/sales_pipeline.html', {
         'client': client,
         'form': form,
+        'product_form': product_form,
+        'order_form': order_form,
         'pipeline': pipeline,
+        'products': products,
+        'total_revenue': total_revenue,
+        'orders': pipeline.orders.all(),
     })
 
 def register(request):
@@ -78,6 +137,71 @@ def login_view(request):
     return render(request, 'registration/login.html', {'form': form})
 
 def logout_view(request):
+    logout(request)
+    return redirect('login')
+    
+def campaign_list(request):
+    campaigns = Campaign.objects.filter(owner=request.user)
+    return render(request, 'crm/campaign_list.html', {'campaigns': campaigns})
+
+def campaign_create(request):
     if request.method == 'POST':
-        logout(request)
-        return redirect('login')
+        form = CampaignForm(request.POST)
+        formset = ProductFormSet(request.POST)
+        if form.is_valid() and formset.is_valid():
+            campaign = form.save(commit=False)
+            campaign.owner = request.user
+            campaign.save()
+            products = formset.save(commit=False)
+            for product in products:
+                product.campaign = campaign
+                product.save()
+            return redirect('campaign_list')
+    else:
+        form = CampaignForm()
+        formset = ProductFormSet()
+
+    return render(request, 'crm/campaign_form.html', {'form': form, 'formset': formset})
+
+def campaign_detail(request, campaign_id):
+    campaign = get_object_or_404(Campaign, id=campaign_id)
+    if request.method == 'POST':
+        form = CampaignForm(request.POST, instance=campaign)
+        if form.is_valid():
+            form.save()
+            return redirect('campaign_list')
+    else:
+        form = CampaignForm(instance=campaign)
+    
+    return render(request, 'crm/campaign_detail.html', {'campaign': campaign, 'form': form})
+
+def send_campaign(request, campaign_id):
+    campaign = get_object_or_404(Campaign, id=campaign_id)
+    clients = Client.objects.filter(owner=request.user)
+    
+    for client in clients:
+        Lead.objects.create(client=client, campaign=campaign)
+    
+    return redirect('campaign_list')
+
+def lead_list(request):
+    leads = Lead.objects.filter(client__owner=request.user)
+    return render(request, 'crm/lead_list.html', {'leads': leads})
+
+def dashboard(request):
+    # Calculate the revenue for different stages
+    pipelines = SalesPipeline.objects.filter(client__owner=request.user)
+    
+    revenue_order_stage = sum(product.normal_price for pipeline in pipelines if pipeline.current_stage == 'order' for product in pipeline.products.all())
+    revenue_other_stages = sum(product.normal_price for pipeline in pipelines if pipeline.current_stage != 'order' for product in pipeline.products.all())
+    
+    clients = Client.objects.filter(owner=request.user)
+    leads = Lead.objects.filter(client__owner=request.user).select_related('client', 'campaign')
+
+    context = {
+        'revenue_order_stage': revenue_order_stage,
+        'revenue_other_stages': revenue_other_stages,
+        'clients': clients,  # Pass the client list
+        'leads': leads,      # Pass the lead list with related campaign and client
+    }
+    return render(request, 'crm/dashboard.html', context)

@@ -1,0 +1,20 @@
+{% extends "crm/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2>Leads</h2>
+            <ul class="list-group mt-3">
+                {% for lead in leads %}
+                <li class="list-group-item">
+                    <strong>{{ lead.client.name }}</strong> - {{ lead.campaign.name }}
+                    <span class="badge badge-primary">{{ lead.status }}</span>
+                    <small class="text-muted">Created on {{ lead.created_at }}</small>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

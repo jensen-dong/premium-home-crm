@@ -1,0 +1,111 @@
+{% extends "crm/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2>Create Campaign</h2>
+            <form method="POST">
+                {% csrf_token %}
+                {{ form.as_p }}
+
+                <h4>Products</h4>
+                <div id="formset">
+                    {{ formset.management_form }}
+                    {% for form in formset %}
+                        <div class="form-row product-row">
+                            <div class="col-md-4">
+                                {{ form.name.label_tag }} {{ form.name }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.room.label_tag }} {{ form.room }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.normal_price.label_tag }} {{ form.normal_price }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.discount_price.label_tag }} {{ form.discount_price }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.link.label_tag }} {{ form.link }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div id="empty-form" style="display:none;">
+                    <div class="form-row product-row">
+                        <div class="col-md-4">
+                            {{ formset.empty_form.name.label_tag }} {{ formset.empty_form.name }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ formset.empty_form.room.label_tag }} {{ formset.empty_form.room }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ formset.empty_form.normal_price.label_tag }} {{ formset.empty_form.normal_price }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ formset.empty_form.discount_price.label_tag }} {{ formset.empty_form.discount_price }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ formset.empty_form.link.label_tag }} {{ formset.empty_form.link }}
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" id="addProductBtn" class="btn btn-secondary mt-3">Add Product</button>
+                <br><br>
+
+                <div class="row mt-4">
+                    <div class="col-6">
+                        <strong>Total Normal Price: $<span id="totalNormalPrice">0.00</span></strong>
+                    </div>
+                    <div class="col-6">
+                        <strong>Total Discounted Price: $<span id="totalDiscountedPrice">0.00</span></strong>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary mt-3">Save Campaign</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function(){
+
+        let formIdx = $('#id_form-TOTAL_FORMS').val();
+
+        $('#addProductBtn').click(function() {
+            console.log('Add Product Button Clicked');
+            let newForm = $('#empty-form').html().replace(/__prefix__/g, formIdx);
+            console.log('New form created:', newForm);
+            $('#formset').append(newForm);
+            formIdx++;
+            $('#id_form-TOTAL_FORMS').val(formIdx);
+            calculateTotals(); 
+        });
+
+        function calculateTotals() {
+            let totalNormal = 0;
+            let totalDiscounted = 0;
+            $('.product-normal-price').each(function() {
+                totalNormal += parseFloat($(this).val()) || 0;
+            });
+            $('.product-discount-price').each(function() {
+                totalDiscounted += parseFloat($(this).val()) || 0;
+            });
+            $('#totalNormalPrice').text(totalNormal.toFixed(2));
+            $('#totalDiscountedPrice').text(totalDiscounted.toFixed(2));
+        }
+
+        $(document).on('input', '.product-normal-price, .product-discount-price', function() {
+            calculateTotals();
+        });
+
+        calculateTotals();
+    });
+</script>
+{% endblock %}

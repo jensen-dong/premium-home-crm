@@ -1,0 +1,73 @@
+{% extends "crm/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2>Dashboard</h2>
+            <canvas id="myChart"></canvas>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Book of Business</h5>
+                    <ul class="list-group">
+                        {% for client in clients %}
+                        <li class="list-group-item">
+                            <a href="{% url 'sales_pipeline' client.id %}" class="text-decoration-none">{{ client.name }}</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Leads</h5>
+                    <ul class="list-group">
+                        {% for lead in leads %}
+                        <li class="list-group-item">
+                            <strong>{{ lead.client.name }}</strong>&nbsp;Campaign:&nbsp;<strong>{{ lead.campaign.name }}</strong>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // eslint-disable-next-line no-undef
+    const revenueOrderStage = {{ revenue_order_stage|default:0 }};
+    const revenueOtherStages = {{ revenue_other_stages|default:0 }};
+    
+    const ctx = document.getElementById('myChart').getContext('2d');
+    const myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Order Stage', 'Other Stages'],
+            datasets: [{
+                label: 'Total Revenue',
+                data: [revenueOrderStage, revenueOtherStages],
+                backgroundColor: ['rgba(54, 162, 235, 0.2)', 'rgba(255, 99, 132, 0.2)'],
+                borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
