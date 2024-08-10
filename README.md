@@ -18,7 +18,9 @@ Premium Home CRM is a robust customer relationship management application tailor
 [Render Site](https://premium-home-crm.onrender.com/)
 - Demo username: testuser
 - Demo password: Password123
-Use demo account for preset data in the database. Or you can create your own account and create your own data!
+
+- Use demo account for preset data in the database. Or you can create your own account and create your own data!
+- Please do not modify data in demo account!
 
 ## Setup and Installation
 1. Clone the repository
