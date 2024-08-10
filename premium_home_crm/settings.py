@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-id_4-k0=^d(sy@f)u*+gh75rullxyhsaol#x+k(2e!nx=$oj&b'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['premium-home-crm.onrender.com', 'localhost', '127.0.0.1']
 
