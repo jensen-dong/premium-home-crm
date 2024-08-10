@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Client, SalesPipeline, Campaign, Order, Lead
+from .models import Client, SalesPipeline, Campaign, Order, Lead, Product
 from .forms import ClientForm, SalesPipelineForm, ProductForm, CampaignForm, OrderForm, ProductFormSet
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 # Create your views here.
 def redirect_to_appropriate_view(request):
@@ -15,7 +17,6 @@ def client_list(request):
     clients = Client.objects.filter(owner=request.user)
     client_data = []
     for client in clients:
-        # Try to get the SalesPipeline for the client
         pipeline, created = SalesPipeline.objects.get_or_create(client=client)
         total_revenue = sum(product.normal_price for product in pipeline.products.all())
         client_data.append({
@@ -59,10 +60,12 @@ def client_update(request, pk):
 
 def client_delete(request, pk):
     client = get_object_or_404(Client, pk=pk, owner=request.user)
+    
     if request.method == 'POST':
         client.delete()
-        return redirect('client_list')
-    return render(request, 'crm/client_list.html')
+        return HttpResponseRedirect(reverse('client_list'))
+    
+    return HttpResponseRedirect(reverse('client_list'))
 
 def sales_pipeline(request, client_id):
     print("Request method:", request.method)
@@ -99,7 +102,7 @@ def sales_pipeline(request, client_id):
             if order_form.is_valid():
                 order = order_form.save(commit=False)
                 order.pipeline = pipeline
-                order.total_price = total_revenue  # Set the total price based on total revenue
+                order.total_price = total_revenue 
                 order.save()
                 return redirect('sales_pipeline', client_id=client_id)
 
@@ -113,6 +116,17 @@ def sales_pipeline(request, client_id):
         'total_revenue': total_revenue,
         'orders': pipeline.orders.all(),
     })
+
+def delete_product(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    pipeline_id = product.pipeline.id 
+    client_id = product.pipeline.client.id
+
+    if request.method == 'POST':
+        product.delete()
+        return HttpResponseRedirect(reverse('sales_pipeline', args=[client_id]))
+
+    return redirect('sales_pipeline', client_id=client_id)
 
 def register(request):
     if request.method == 'POST':
@@ -131,7 +145,7 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect('client_list')
+            return redirect('dashboard')
     else:
         form = AuthenticationForm()
     return render(request, 'registration/login.html', {'form': form})
@@ -184,12 +198,21 @@ def send_campaign(request, campaign_id):
     
     return redirect('campaign_list')
 
+def campaign_delete(request, campaign_id):
+    campaign = get_object_or_404(Campaign, id=campaign_id)
+
+    if request.method == 'POST':
+        campaign.delete()
+        return HttpResponseRedirect(reverse('campaign_list'))
+
+    return HttpResponseRedirect(reverse('campaign_detail', args=[campaign_id]))
+
 def lead_list(request):
     leads = Lead.objects.filter(client__owner=request.user)
     return render(request, 'crm/lead_list.html', {'leads': leads})
 
 def dashboard(request):
-    # Calculate the revenue for different stages
+
     pipelines = SalesPipeline.objects.filter(client__owner=request.user)
     
     revenue_order_stage = sum(product.normal_price for pipeline in pipelines if pipeline.current_stage == 'order' for product in pipeline.products.all())
@@ -201,7 +224,7 @@ def dashboard(request):
     context = {
         'revenue_order_stage': revenue_order_stage,
         'revenue_other_stages': revenue_other_stages,
-        'clients': clients,  # Pass the client list
-        'leads': leads,      # Pass the lead list with related campaign and client
+        'clients': clients,
+        'leads': leads,
     }
     return render(request, 'crm/dashboard.html', context)
