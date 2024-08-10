@@ -82,17 +82,17 @@ WSGI_APPLICATION = 'premium_home_crm.wsgi.application'
 DATABASE_URL = os.getenv("DATABASE_URL", default="")
 
 DATABASES = {
-    "default": dj_database_url.parse(os.environ.get("DATABASE_URL"))
-}
-
-""" 'default': {
+    'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'crm',
         'USER': 'crmuser',
         'PASSWORD': 'designer',
         'HOST': 'localhost'
-    } """
+    }
+}
 
+
+""" "default": dj_database_url.parse(os.environ.get("DATABASE_URL")) """
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
