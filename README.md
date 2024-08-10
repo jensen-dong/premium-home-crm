@@ -76,3 +76,125 @@ Use demo account for preset data in the database. Or you can create your own acc
 
 ![Screenshot 2024-08-06 at 8 03 01 PM](https://github.com/user-attachments/assets/706b6fd4-bd07-432a-b65e-5b013577ac80)
 
+## Code Snippet
+### sales_pipeline view function
+```python
+def sales_pipeline(request, client_id):
+    print("Request method:", request.method)
+    client = get_object_or_404(Client, id=client_id, owner=request.user)
+    pipeline, created = SalesPipeline.objects.get_or_create(client=client)
+
+    products = pipeline.products.all()
+    total_revenue = sum(product.normal_price for product in products)
+
+    form = SalesPipelineForm(instance=pipeline)
+    product_form = ProductForm()
+    order_form = OrderForm()
+
+    if request.method == 'POST':
+        print("Handling POST request")
+        if 'stage_form' in request.POST:
+            form = SalesPipelineForm(request.POST, instance=pipeline)
+            if form.is_valid():
+                form.save()
+                return redirect('sales_pipeline', client_id=client_id)
+        elif 'product_form' in request.POST:
+            print("Handling product form submission")
+            product_form = ProductForm(request.POST)
+            if product_form.is_valid():
+                product = product_form.save(commit=False)
+                product.pipeline = pipeline
+                product.save()
+                print("Product added successfully:", product.name)
+                return redirect('sales_pipeline', client_id=client_id)
+            else:
+                print("Product form is not valid. Errors:", product_form.errors)
+        elif 'order_form' in request.POST:
+            order_form = OrderForm(request.POST)
+            if order_form.is_valid():
+                order = order_form.save(commit=False)
+                order.pipeline = pipeline
+                order.total_price = total_revenue 
+                order.save()
+                return redirect('sales_pipeline', client_id=client_id)
+
+    return render(request, 'crm/sales_pipeline.html', {
+        'client': client,
+        'form': form,
+        'product_form': product_form,
+        'order_form': order_form,
+        'pipeline': pipeline,
+        'products': products,
+        'total_revenue': total_revenue,
+        'orders': pipeline.orders.all(),
+    })
+```
+
+### Graphing logic
+```HTML
+<script>
+    // eslint-disable-next-line no-undef
+    const revenueOrderStage = {{ revenue_order_stage|default:0 }};
+    const revenueOtherStages = {{ revenue_other_stages|default:0 }};
+    
+    const ctx = document.getElementById('myChart').getContext('2d');
+    const myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Order Stage', 'Other Stages'],
+            datasets: [{
+                label: 'Total Revenue',
+                data: [revenueOrderStage, revenueOtherStages],
+                backgroundColor: ['rgba(54, 162, 235, 0.2)', 'rgba(255, 99, 132, 0.2)'],
+                borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+```
+
+### Auth
+```Python
+# views.py
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('client_list')
+    else:
+        form = UserCreationForm()
+    return render(request, 'registration/register.html', {'form': form})
+
+def login_view(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect('dashboard')
+    else:
+        form = AuthenticationForm()
+    return render(request, 'registration/login.html', {'form': form})
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+```
+```Python
+# urls.py
+    # Authentication
+    path('register/', views.register, name='register'),
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+```
+
