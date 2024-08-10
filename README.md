@@ -14,6 +14,9 @@ Premium Home CRM is a robust customer relationship management application tailor
 - Marketing campaign management
 - Responsive frontend templates
 
+## DEMO
+[Render Site](https://premium-home-crm.onrender.com/)
+
 ## Setup and Installation
 1. Clone the repository
    ```zsh
