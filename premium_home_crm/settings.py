@@ -10,7 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import dj_database_url
+import os
+from dotenv import load_dotenv
 from pathlib import Path
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -74,16 +79,19 @@ WSGI_APPLICATION = 'premium_home_crm.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+DATABASE_URL = os.getenv("DATABASE_URL", default="")
+
 DATABASES = {
-    'default': {
+    "default": dj_database_url.parse(os.environ.get("DATABASE_URL"))
+}
+
+""" 'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'crm',
         'USER': 'crmuser',
         'PASSWORD': 'designer',
         'HOST': 'localhost'
-    }
-}
-
+    } """
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
