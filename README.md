@@ -4,7 +4,7 @@
 Premium Home CRM is a robust customer relationship management application tailored for businesses dealing with high-end audio and appliance packages. The app helps manage sales pipelines, leads, and marketing campaigns. It streamlines workflows, improves customer satisfaction, and boosts sales efficiency.
 
 ## Technologies Used
-- **Frontend:** HTML, CSS, JavaScript, Bootstrap
+- **Frontend:** HTML, CSS, JavaScript, Bootstrap, Chart.js
 - **Backend:** Python, Django, PostgreSQL
 
 ## Features
