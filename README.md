@@ -22,6 +22,9 @@ Premium Home CRM is a robust customer relationship management application tailor
 - Use demo account for preset data in the database. Or you can create your own account and create your own data!
 - Please do not modify data in demo account!
 
+![Screenshot 2024-08-10 at 4 30 06 PM](https://github.com/user-attachments/assets/7f7a48d9-a77a-4895-8307-acde89bca955)
+
+
 ## Setup and Installation
 1. Clone the repository
    ```zsh
