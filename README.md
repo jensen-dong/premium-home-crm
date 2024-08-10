@@ -136,6 +136,27 @@ def sales_pipeline(request, client_id):
 ```
 
 ### Graphing logic
+```Python
+# views.py
+def dashboard(request):
+
+    pipelines = SalesPipeline.objects.filter(client__owner=request.user)
+    
+    revenue_order_stage = sum(product.normal_price for pipeline in pipelines if pipeline.current_stage == 'order' for product in pipeline.products.all())
+    revenue_other_stages = sum(product.normal_price for pipeline in pipelines if pipeline.current_stage != 'order' for product in pipeline.products.all())
+    
+    clients = Client.objects.filter(owner=request.user)
+    leads = Lead.objects.filter(client__owner=request.user).select_related('client', 'campaign')
+
+    context = {
+        'revenue_order_stage': revenue_order_stage,
+        'revenue_other_stages': revenue_other_stages,
+        'clients': clients,
+        'leads': leads,
+    }
+    return render(request, 'crm/dashboard.html', context)
+```
+
 ```HTML
 <script>
     // eslint-disable-next-line no-undef
